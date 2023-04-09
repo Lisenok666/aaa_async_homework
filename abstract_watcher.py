@@ -1,5 +1,7 @@
 import abc
+import asyncio
 from typing import Coroutine, Any
+from queue import Queue
 
 """
 Описание задачи:
@@ -44,6 +46,7 @@ class AbstractWatcher(abc.ABC):
 
     def __init__(self, registrator: AbstractRegistrator):
         self.registrator = registrator  # we expect to find registrator here
+        self.all_tasks = []
 
     @abc.abstractmethod
     async def start(self) -> None:
@@ -65,16 +68,32 @@ class StudentWatcher(AbstractWatcher):
     def __init__(self, registrator: AbstractRegistrator):
         super().__init__(registrator)
         # Your code goes here
-        ...
+        self.all_tasks = []
 
     async def start(self) -> None:
-        # Your code goes here
-        ...
+        # while True:
+        if self.all_tasks:
+            done, pending = await asyncio.wait(self.all_tasks, timeout=0.5)
+
+            for t in done:
+                if t.exception() is None:
+                    self.registrator.register_value(t.result())
+                else:
+                    self.registrator.register_error(t.exception())
+
+
 
     async def stop(self) -> None:
         # Your code goes here
-        ...
+        await self.start()
+        for task in self.all_tasks:
+            task.cancel()
+        self.all_tasks = []
+
 
     def start_and_watch(self, coro: Coroutine) -> None:
         # Your code goes here
-        ...
+        task = asyncio.create_task(coro)
+        self.all_tasks.append(task)
+
+
