@@ -73,7 +73,7 @@ class StudentWatcher(AbstractWatcher):
     async def start(self) -> None:
         # while True:
         if self.all_tasks:
-            done, pending = await asyncio.wait(self.all_tasks, timeout=0.5)
+            done, pending = await asyncio.wait(self.all_tasks, timeout=4.5)
 
             for t in done:
                 if t.exception() is None:
